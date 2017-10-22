@@ -5,10 +5,13 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Menu;
@@ -17,12 +20,28 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -54,7 +73,15 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Button;
 
-public class GeofencingMain extends AppCompatActivity implements OnCompleteListener<Void> {
+import io.nlopez.smartlocation.location.providers.LocationGooglePlayServicesWithFallbackProvider;
+
+public class GeofencingMain extends AppCompatActivity implements
+        OnCompleteListener<Void>,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        OnMapReadyCallback,
+        GoogleMap.OnMapClickListener,
+        GoogleMap.OnMarkerClickListener {
 
     private static final String TAG = GeofencingMain.class.getSimpleName();
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -62,7 +89,14 @@ public class GeofencingMain extends AppCompatActivity implements OnCompleteListe
     private SharedPreferences sp;
     private Switch onOffSwitch;
 
+    private GoogleApiClient googleApiClient;
+    private Location lastLocation;
+    private TextView latTv, lonTv;
+    private GoogleMap map;
+    private MapFragment mapFragment;
+
     private DatabaseReference mDatabase;
+
     /**
      * Tracks whether the user requested to add or remove geofences, or to do neither.
      */
@@ -96,8 +130,23 @@ public class GeofencingMain extends AppCompatActivity implements OnCompleteListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.geofencing_test_layout);
 
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+        latTv = (TextView) findViewById(R.id.latTv);
+        lonTv = (TextView) findViewById(R.id.lonTv);
+
+
+
+        mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
         sp = this.getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
-        onOffSwitch = (Switch)findViewById(R.id.switch1);
+        onOffSwitch = (Switch) findViewById(R.id.switch1);
 
         mDatabase = FirebaseDatabase.getInstance().getReference("past");
         // Empty list for storing geofences.
@@ -110,14 +159,16 @@ public class GeofencingMain extends AppCompatActivity implements OnCompleteListe
         readFromDatabase(mDatabase);
         mGeofencingClient = LocationServices.getGeofencingClient(this);
 
+        latTv.setText(Double.toString(getLatLon("lat")));
+        lonTv.setText(Double.toString(getLatLon("lon")));
         onOffSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b){
-                    if (mGeofenceList.size() > 0){
+                if (b) {
+                    if (mGeofenceList.size() > 0) {
                         initiateGeofences();
                     }
-                }else {
+                } else {
                     removeGeofences();
                 }
             }
@@ -125,14 +176,54 @@ public class GeofencingMain extends AppCompatActivity implements OnCompleteListe
     }
 
     @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+//        markerForGeofence(latLng);
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return false;
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        map = googleMap;
+        map.setOnMapClickListener(this);
+        map.setOnMarkerClickListener(this);
+    }
+
+
+
+    @Override
     public void onStart() {
         super.onStart();
-
         if (!checkPermissions()) {
             requestPermissions();
         } else {
             performPendingGeofenceTask();
         }
+        googleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        googleApiClient.disconnect();
     }
 
     /**
@@ -166,7 +257,9 @@ public class GeofencingMain extends AppCompatActivity implements OnCompleteListe
                 requestPermissions();
                 return;
             }
-            addGeofences();
+        zoomToLocation();
+
+        addGeofences();
 //            sp.edit().putBoolean("GEOFENCES_NOT_UP", false).apply();
         //}
     }
@@ -211,6 +304,7 @@ public class GeofencingMain extends AppCompatActivity implements OnCompleteListe
 
             String message = getGeofencesAdded() ? "GEOFENCES ADDED" : "geofences_removed";
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+//            drawGeofence();
         } else {
             // Get the status code for the error and log it using a user-friendly message.
             String errorMessage = GeofenceErrorMessages.getErrorString(this, task.getException());
@@ -254,7 +348,7 @@ public class GeofencingMain extends AppCompatActivity implements OnCompleteListe
 
                     Double lat = Double.parseDouble(latLng[0]);
                     Double lon = Double.parseDouble(latLng[1]);
-
+                    map.addMarker(new MarkerOptions().position(new LatLng( lat, lon)).title("Marker"));
                     populateGeofenceList(reqId, lat, lon);
                 }
             }
@@ -302,28 +396,7 @@ public class GeofencingMain extends AppCompatActivity implements OnCompleteListe
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        MenuInflater inflater = getMenuInflater();
-//        inflater.inflate(R.menu.home_options_menu, menu);
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        switch (item.getItemId()){
-//            case R.remove_geofences_button:
-//                if (!checkPermissions()) {
-//                    mPendingGeofenceTask = PendingGeofenceTask.REMOVE;
-//                    requestPermissions();
-//                    return false;
-//                }
-//                removeGeofences();
-//                return true;
-//            default:
-//                return super.onOptionsItemSelected(item);
-//        }
-//    }
+
 
     /**
      * Returns true if geofences were added, otherwise false.
@@ -384,6 +457,24 @@ public class GeofencingMain extends AppCompatActivity implements OnCompleteListe
             ActivityCompat.requestPermissions(GeofencingMain.this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     REQUEST_PERMISSIONS_REQUEST_CODE);
+        }
+    }
+
+    private void zoomToLocation(){
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+
+        if (locationManager != null)
+        {
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(getLatLon("lat"), getLatLon("lon")), 13));
+
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(new LatLng(getLatLon("lat"), getLatLon("lon")))      // Sets the center of the map to location user
+                    .zoom(17)                   // Sets the zoom
+                    .bearing(90)                // Sets the orientation of the camera to east
+                    .tilt(40)                   // Sets the tilt of the camera to 30 degrees
+                    .build();                   // Creates a CameraPosition from the builder
+            map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         }
     }
 
