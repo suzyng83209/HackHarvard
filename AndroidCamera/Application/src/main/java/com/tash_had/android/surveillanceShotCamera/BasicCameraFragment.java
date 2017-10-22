@@ -76,7 +76,7 @@ import java.util.concurrent.TimeUnit;
 public class BasicCameraFragment extends Fragment
         implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
-    private boolean continueCaptureLoop = false;
+    private boolean continueCaptureLoop = true;
     /**
      * Conversion from screen rotation to JPEG orientation.
      */

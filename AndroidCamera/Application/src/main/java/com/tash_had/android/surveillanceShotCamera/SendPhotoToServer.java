@@ -40,9 +40,9 @@ public class SendPhotoToServer {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-//        new makePostRequest().execute(URL, jsonObject.toString());
-        handleServerResponse(true);
-        Log.w("JSON_TAG", jsonObject.toString());
+        new makePostRequest().execute(URL, jsonObject.toString());
+//        handleServerResponse(true);
+//        Log.w("JSON_TAG", jsonObject.toString());
     }
 
     static void handleServerResponse(boolean dangerDetected){
