@@ -1,4 +1,7 @@
 const GunDetectionServices = require('./GunDetectionServices')
+var twilio = require('./TwilioService');
+var detected = false;
+var url =''
 
 const responseHeaders = {
     'Content-Type':'application/json',
@@ -26,14 +29,19 @@ const responses = {
 module.exports = {
     gunDetect : (event, context, callback) => {
         context.callbackWaitsForEmptyEventLoop = false;
-        console.log(event);
-        var requestBody = JSON.parse(JSON.stringify(event)).body;
-        var bodyJson = requestBody.split('&').reduce((json, data) => {
-            var [key, val] = data.split('=');
-            json[key] = val;
-            return json;
-        }, {});
-        console.log(bodyJson);
+        //console.log(event);
+        var requestData = JSON.parse(JSON.stringify(event));
+        var requestBody = requestData.body;
+        if (!requestData.headers['User-Agent'].includes('okhttp')) {
+            var bodyJson = requestBody.split('&').reduce((json, data) => {
+                var [key, val] = data.split('=');
+                json[key] = val;
+                return json;
+            }, {});
+        } else {
+            var bodyJson = JSON.parse(requestBody);
+            bodyJson.encoded_image = unescape(bodyJson.encoded_image);
+        }
         const gunDetectionServices = new GunDetectionServices();
         gunDetectionServices.detectGun(
             bodyJson.uuid,
@@ -42,9 +50,25 @@ module.exports = {
             bodyJson.lon,
             bodyJson.encoded_image
         ).then((info) => {
-            callback(null, responses.success(info))
+            console.log(info);
+            detected = info.success;
+            if (!detected) {
+                console.log('not detected');
+                callback(null, responses.success(detected));
+                throw "YOLO";
+            } else {
+                url = info.url;
+            }
+            return callback(null, responses.success(detected))
+        }).then(()=>{
+            console.log("generateMessage");
+            return twilio.generateMessage(bodyJson.lat, bodyJson.lon, new Date());
+        }).then((msg)=>{
+            console.log(msg);
+            return twilio.text(msg, url);
         }).catch(error => {
-            callback(null, responses.error(error))
+            console.log('error', error);
+            return callback(null, responses.success(false))
         });
     }
 }

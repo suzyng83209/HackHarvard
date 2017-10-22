@@ -22,11 +22,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -42,7 +42,6 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.location.LocationManager;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
@@ -53,7 +52,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -62,12 +60,10 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,14 +76,15 @@ import java.util.concurrent.TimeUnit;
 public class BasicCameraFragment extends Fragment
         implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
-    private boolean continueCaptureLoop = true;
+    private boolean continueCaptureLoop = false;
     /**
      * Conversion from screen rotation to JPEG orientation.
      */
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
-
+//    private View bottomBarView;
+    private FrameLayout bottomBarView;
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -98,7 +95,7 @@ public class BasicCameraFragment extends Fragment
     /**
      * Tag for the {@link Log}.
      */
-    private static final String TAG = "Camera2BasicFragment";
+    private static final String TAG = "BasicCameraFragment";
 
     /**
      * Camera state: Showing camera preview.
@@ -429,7 +426,9 @@ public class BasicCameraFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_camera2_basic, container, false);
+        View v =  inflater.inflate(R.layout.fragment_camera2_basic, container, false);
+        GlobalVariables.bottomBarView = v;
+        return v;
     }
 
     @Override
@@ -513,10 +512,16 @@ public class BasicCameraFragment extends Fragment
                 }
 
                 // For still image captures, we use the largest available size.
-                Size largest = Collections.max(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
-                        new CompareSizesByArea());
-                mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
+//                Log.w("# OF IMAGE_FORMATS_TAG", Integer.toString(map.getOutputSizes(ImageFormat.JPEG).length));
+
+//                Size largest = Collections.max
+//                        (
+//                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
+//                        new CompareSizesByArea());
+                Size sizeOfRender = new Size(1080, 1920);
+//                Size sizeOfRender = new Size(1280, 720);
+
+                mImageReader = ImageReader.newInstance(sizeOfRender.getWidth(), sizeOfRender.getHeight(),
                         ImageFormat.JPEG, /*maxImages*/2);
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mBackgroundHandler);
@@ -571,7 +576,7 @@ public class BasicCameraFragment extends Fragment
                 // garbage capture data.
                 mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
                         rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
-                        maxPreviewHeight, largest);
+                        maxPreviewHeight, sizeOfRender);
 
                 // We fit the aspect ratio of TextureView to the size of preview we picked.
                 int orientation = getResources().getConfiguration().orientation;
@@ -941,10 +946,10 @@ public class BasicCameraFragment extends Fragment
          */
 //        private final File mFile;
 
-        ImageSaver(Image image, File file) {
-            mImage = image;
-//            mFile = file;
-        }
+//        ImageSaver(Image image, File file) {
+//            mImage = image;
+////            mFile = file;
+//        }
         ImageSaver(Image image){
             mImage = image;
         }
@@ -983,7 +988,8 @@ public class BasicCameraFragment extends Fragment
 //            String encodedImage = Base64.encodeToString(imageAsByteArray, Base64.NO_WRAP);
 //            Log.w("BSAE64_TAAAAAAG", encodedImage);
 
-
+            // UNCOMMENT LINE BELOW TO GET IMAGE STORED TO DISK (location in ProcessingImageDetails.java)
+//            ProcessImageDetails.renderImage(mImage);
             ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
@@ -991,7 +997,11 @@ public class BasicCameraFragment extends Fragment
             mImage.close();
             pid.bitmap = bitmap1;
             pid.setImageData();
-
+//            try {
+//                TimeUnit.SECONDS.sleep(1);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
 
 
 //            new ProcessImageDetails().execute("hey");

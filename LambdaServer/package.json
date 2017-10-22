@@ -16,6 +16,11 @@
   },
   "dependencies": {
     "firebase": "^4.6.0",
-    "axios": ""
+    "axios": "",
+    "twilio": "",
+    "aws-sdk": "",
+    "moment": "",
+    "file-type": "",
+    "sha1": ""
   }
 }

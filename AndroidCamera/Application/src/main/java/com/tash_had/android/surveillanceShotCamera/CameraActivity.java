@@ -17,14 +17,12 @@
 package com.tash_had.android.surveillanceShotCamera;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.FrameLayout;
 
 public class CameraActivity extends AppCompatActivity {
     int REQUEST_LOCATION_PERMISSION = 123;
@@ -37,7 +35,8 @@ public class CameraActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        Config.cameraActivity = this;
+        GlobalVariables.bottomBarView = findViewById(R.id.bottom_bar);
+        GlobalVariables.cameraActivity = this;
 
 
         if (null == savedInstanceState) {

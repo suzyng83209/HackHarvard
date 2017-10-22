@@ -25,7 +25,7 @@
         android:layout_alignParentTop="true" />
 
     <FrameLayout
-        android:id="@+id/control"
+        android:id="@+id/bottom_bar"
         android:layout_width="match_parent"
         android:layout_height="112dp"
         android:layout_alignParentBottom="true"
@@ -52,5 +52,18 @@
             android:src="@drawable/ic_stop_white_36dp" />
 
     </FrameLayout>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_above="@+id/bottom_bar"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_vertical|center_horizontal"
+        android:paddingBottom="8dp"
+        android:text="Danger Detected"
+        android:textAlignment="center"
+        android:textColor="#000"
+        android:textSize="20dp" />
 
 </RelativeLayout>
