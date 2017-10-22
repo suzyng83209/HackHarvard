@@ -93,18 +93,19 @@ class GunDetectionServices {
                             url: 'https://s3-us-west-2.amazonaws.com/shooter-image/' + fileFullName
                         }).then(()=>{
                             s3.upload(decodeURIComponent(encoded_image), fileFullName);
+                            return null;
                         }).catch(err => console.error('update failed', err));
-                        return true;
+                        return {'success':true, 'url':'https://s3-us-west-2.amazonaws.com/shooter-image/' + fileFullName};
                     } else {
-                        return false;
+                        return {'success':false, 'url':''};
                     }
                 })
             } else {
-                return false;
+                return {'success':false, 'url':''};
             }
         }).catch(function (err) {
             console.log('detect gun failed', err);
-            return false;
+            return {'success':false, 'url':''};
         });
     }
 }

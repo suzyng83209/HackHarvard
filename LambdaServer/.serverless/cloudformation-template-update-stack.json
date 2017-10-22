@@ -92,7 +92,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/gun-detection-services/dev/1508655605199-2017-10-22T07:00:05.199Z/gun-detection-services.zip"
+          "S3Key": "serverless/gun-detection-services/dev/1508667860645-2017-10-22T10:24:20.645Z/gun-detection-services.zip"
         },
         "FunctionName": "gun-detection-services-dev-gunDetect",
         "Handler": "lambdaHandlers.gunDetect",
@@ -111,14 +111,14 @@
         "IamRoleLambdaExecution"
       ]
     },
-    "GunDetectLambdaVersionB1o64SLF8BaQ5HLilHWl0ra83gCpTP8sIm3ARFFNmk": {
+    "GunDetectLambdaVersiondtdvMmmIyYDYNgZJMuaCFpQ4u2KHxegFWhR3GD8sg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "GunDetectLambdaFunction"
         },
-        "CodeSha256": "B1o64SLF8BaQ5HLilHWl0+ra83gCpTP8sIm3ARFFNmk="
+        "CodeSha256": "dtdvMmm+IyYDYNgZJMuaCFp/Q4u2KHxegFWhR3GD8sg="
       }
     },
     "ApiGatewayRestApi": {
@@ -226,7 +226,7 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1508655605254": {
+    "ApiGatewayDeployment1508667860692": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -281,7 +281,7 @@
     "GunDetectLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "GunDetectLambdaVersionB1o64SLF8BaQ5HLilHWl0ra83gCpTP8sIm3ARFFNmk"
+        "Ref": "GunDetectLambdaVersiondtdvMmmIyYDYNgZJMuaCFpQ4u2KHxegFWhR3GD8sg"
       }
     },
     "ServiceEndpoint": {

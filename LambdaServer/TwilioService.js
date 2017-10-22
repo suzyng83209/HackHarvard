@@ -1,10 +1,10 @@
 var twilio = require('twilio');
 var axios = require('axios');
 
-var accountSid = 'AC26428257217bf39204381e50ac8cf1f9';
-var authToken = '9b78591857048edc714bc76b7343f6a6';
-var receiver = '+19292739691';
-var sender = '+14159094122';
+var accountSid = 'ACb170dd66462caa17dab2b7848d176c11';
+var authToken = '36d56c923a4048d9af2a473aee4023d2';
+var receiver = '+14153167998';
+var sender = '+16397392544';
 
 var geoCodingAPI = 'AIzaSyDEtpXuQTPIjRriZDytcqOtD0aUE8kHN2M';
 var t = new twilio(accountSid, authToken);;
@@ -20,16 +20,19 @@ exports.generateMessage = function(lat, lng, date) {
     }).catch(err => console.error(err));
 }
 
-exports.text = function(message) {
-    console.log("sending msg")
+exports.text = function(message, imgURls) {
+    console.log("sending msg");
+    console.log(message);
+    console.log(imgURls);
     if (typeof message !== 'string') {
+        console.log("not string")
         throw new Error('Invalid message format');
     }
 
     return t.messages
         .create({
             body: message,
-            //mediaUrl: imgURls,    
+            mediaUrl: imgURls,    
             to: receiver,
             from: sender
         })
