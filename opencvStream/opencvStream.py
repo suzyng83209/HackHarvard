@@ -5,6 +5,8 @@ import base64
 import uuid
 import requests
 import json
+#from grequests import
+
 
 myuuid = str(uuid.uuid1())
 
@@ -17,12 +19,14 @@ lat = j['latitude']
 lon = j['longitude']
 
 file_out = "intruder_log.txt"
+
 def main(mirror=False):
+    flag = 0
     cam = cv2.VideoCapture(0)
     cam.set(6,24)
     while True:
         ret_val, img = cam.read()
-        resized = cv2.resize(img, (img.shape[1]/5,img.shape[0]/5), interpolation = cv2.INTER_AREA)
+        resized = cv2.resize(img, (img.shape[1]/3,img.shape[0]/3), interpolation = cv2.INTER_AREA)
         ret_val, buffer = cv2.imencode('.jpg',resized)
         gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
         jpg_as_text = base64.b64encode(buffer)
@@ -37,15 +41,19 @@ def main(mirror=False):
             face_as_text = base64.b64encode(buffer2)
         body = {
             "uuid": myuuid,
-            "timestamp": round((d - epoch).total_seconds()),
+            "timestamp": int(round((d - epoch).total_seconds())),
             "lat": lat,
             "lon": lon,
             "encoded_image": jpg_as_text,
         }
+        
         response = requests.post(url='https://ia8s1k2mhd.execute-api.us-west-2.amazonaws.com/dev/detect', data=body)
         json_data = json.loads(response.text)
         print(json_data)
-        if json_data == True:
+        if json_data == False:
+            flag = flag-1
+        elif json_data == True or flag > 0:
+            flag = 80
             resized[:, :, 0] = 0
             resized[:, :, 1] = 0
             cv2.putText(resized, 'Firearm Detected', org=(25, 30), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255))
@@ -54,7 +62,7 @@ def main(mirror=False):
             cv2.putText(resized, 'D/T:'+str(datetime.datetime.now()), org=(25, 105), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255))
         back2big = cv2.resize(resized, (1200,750), interpolation = cv2.INTER_AREA)
         cv2.imshow("security camera", back2big)
-        if cv2.waitKey(10) == 27:
+        if cv2.waitKey(33) == ord('a'):
             break
     cam.release()
     cv2.destroyAllWindows()
