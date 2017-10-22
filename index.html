@@ -24,6 +24,8 @@
       * Reference to Firebase database.
       * @const
       */
+    var uuids = {};
+
       var firebase = new Firebase('https://gundetection.firebaseio.com');
 
       function makeInfoBox(controlDiv, map) {
@@ -146,7 +148,7 @@
           radius: 16
         });
 
-        initFirebase(heatmap);
+        initFirebase(map);
       }
 
       /**
@@ -178,17 +180,40 @@
               var data = httpRequest.responseText;
               data = JSON.parse(data);
 
-              console.log('request made');
+              var keys = Object.keys(data);
+
+              var newUuids = keys.reduce(function(list, item) {
+                list[item] = true;
+                return list;
+              }, {});
               
-              Object.keys(data).map(function(key) {
-                var { coordinates } = data[key];
-                var lat = parseFloat(coordinates[0]), lng = parseFloat(coordinates[1]);
-                var point = new google.maps.LatLng(lat, lng);
-                
-                // Add the point to  the heatmap.
-                heatmap.getData().push(point);
+              keys.map(function(key) {
+                var { coordinates, url } = data[key];
+                var lat = parseFloat(coordinates[0]), lng = parseFloat(coordinates[1]),
+                image = {
+                    url: 'https://www.iconsdb.com/icons/preview/red/warning-xxl.png',
+                    size: new google.maps.Size(32, 32),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(16, 16)
+                };
+
+                var point = new google.maps.Marker({
+                    position: new google.maps.LatLng(lat, lng),
+                    map: heatmap,
+                    id: key,
+                    animation: uuids[key] ? null : google.maps.Animation.DROP
+                });
+
+                google.maps.event.addListener(point, 'mouseover', function(event) {
+                    this.setIcon(url);
+                });
+                google.maps.event.addListener(point, 'mouseout', function(event) {
+                    this.setIcon();
+                });
 
               });
+
+              uuids = newUuids;
 
             } else {
               alert('There was a problem with the request.');
