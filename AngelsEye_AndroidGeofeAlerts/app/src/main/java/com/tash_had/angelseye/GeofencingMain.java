@@ -159,6 +159,12 @@ public class GeofencingMain extends AppCompatActivity implements
         readFromDatabase(mDatabase);
         mGeofencingClient = LocationServices.getGeofencingClient(this);
 
+        if (sp.getBoolean("Checked_Geofencing", false)){
+            onOffSwitch.setChecked(true);
+        }else {
+            onOffSwitch.setChecked(false);
+        }
+
         latTv.setText(Double.toString(getLatLon("lat")));
         lonTv.setText(Double.toString(getLatLon("lon")));
         onOffSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -167,9 +173,11 @@ public class GeofencingMain extends AppCompatActivity implements
                 if (b) {
                     if (mGeofenceList.size() > 0) {
                         initiateGeofences();
+                        sp.edit().putBoolean("Checked_Geofencing", true).apply();
                     }
                 } else {
                     removeGeofences();
+                    sp.edit().putBoolean("Checked_Geofencing", false).apply();
                 }
             }
         });
@@ -257,7 +265,7 @@ public class GeofencingMain extends AppCompatActivity implements
                 requestPermissions();
                 return;
             }
-        zoomToLocation();
+//        zoomToLocation();
 
         addGeofences();
 //            sp.edit().putBoolean("GEOFENCES_NOT_UP", false).apply();
@@ -348,7 +356,7 @@ public class GeofencingMain extends AppCompatActivity implements
 
                     Double lat = Double.parseDouble(latLng[0]);
                     Double lon = Double.parseDouble(latLng[1]);
-                    map.addMarker(new MarkerOptions().position(new LatLng( lat, lon)).title("Marker"));
+                    map.addMarker(new MarkerOptions().position(new LatLng( lat, lon)).title(latLngStr));
                     populateGeofenceList(reqId, lat, lon);
                 }
             }
