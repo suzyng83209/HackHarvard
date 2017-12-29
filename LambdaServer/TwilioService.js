@@ -3,7 +3,7 @@ var axios = require('axios');
 
 var accountSid = 'ACb170dd66462caa17dab2b7848d176c11';
 var authToken = '36d56c923a4048d9af2a473aee4023d2';
-var receiver = '+14153167998';
+var receiver = '+19292739691';
 var sender = '+16397392544';
 
 var geoCodingAPI = 'AIzaSyDEtpXuQTPIjRriZDytcqOtD0aUE8kHN2M';

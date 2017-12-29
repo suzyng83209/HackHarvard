@@ -1,8 +1,5 @@
 const AWS = require('aws-sdk');
 AWS.config.update({
-    accessKeyId: "AKIAJTA26BP5COXYLUWA",
-    secretAccessKey: "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",
-    "region": "us-west-2" 
 });
 const s3 = new AWS.S3();
 const moment = require('moment');
