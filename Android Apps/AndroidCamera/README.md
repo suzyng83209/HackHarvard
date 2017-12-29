@@ -1,6 +1,6 @@
 # AngelsEye Camera for Android
 
-![alt text](https://github.com/suzyng83209/HackHarvard/blob/master/AndroidCamera/screenshot.jpg "Angels Eye Camera Screenshot" )
+![alt text](https://github.com/suzyng83209/HackHarvard/blob/master/Android%20Apps/AndroidCamera/screenshot.jpg "Angels Eye Camera Screenshot" )
 
 The camera here was built using the [Camera2API sample](https://github.com/googlesamples/android-Camera2Basic) for the base camera part. 
 It has been modified to take continuous photos at a lower resolution, prepare the photo with details such as time and geocordinates, then 
