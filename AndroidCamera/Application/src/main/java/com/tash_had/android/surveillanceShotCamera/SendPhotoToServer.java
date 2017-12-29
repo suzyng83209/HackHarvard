@@ -19,10 +19,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 
-/**
- * Created by tash-had on 2017-10-21.
- */
-
 public class SendPhotoToServer {
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     static OkHttpClient client;
@@ -93,7 +89,6 @@ public class SendPhotoToServer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
             }else{
                 Toast.makeText(GlobalVariables.cameraActivity, "Network Error", Toast.LENGTH_SHORT).show();
             }
